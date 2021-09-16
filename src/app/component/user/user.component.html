@@ -1,0 +1,355 @@
+<div class="container" style="background: rgb(212, 217, 223);" >
+    <div class="row mb-2 mt-2 text-center">
+        <div class="col-md-4"></div>
+        <div class="col-md-4">
+            <h4>User Management Portal</h4>
+            <small *ngIf="titleAction$ | async as title"> {{title}} </small>
+        </div>
+        <div class="col-md-4"></div>
+    </div>
+
+    <!-- nav bar -->
+    <nav class="navbar navbar-expand-sm breadcrumb" style="background: white">
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <div class="nav nav-pills">
+                <a class="nav-item nav-link active ml-1" href="#users" (click)="changeTitle('Users')" data-toggle="tab">
+                    <i class="fa fa-users"></i>
+                    Users
+                </a>
+                <a [hidden]="!isAdmin" href="#reset-password" class="nav-item nav-link ml-3" (click)="changeTitle('Settings')" data-toggle="tab">
+                    <i class="fa fa-cogs"></i>Settings
+                </a>
+                <a class="nav-item nav-link move-right mr-3" href="#profile" (click)="changeTitle('Profile')" data-toggle="tab">
+                    Welcome, {{user?.firstName}}
+                    <i class="fa fa-user"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+    <!-- main-content -->
+    <div class="tab-content mt-3" id="myTabContent">
+        <!-- user table -->
+        <div class="tab-pane fade show active" id="users">
+            <div class="mb-3 float-right">
+                <div class="btn-group mr-2">
+                    <form #searchForm="ngForm" class="form-inline my-2 my-lg-0 justify-content-center">
+                        <input type="search" ngModel name="searchTerm" class="form-control mr-sm-2"
+                         (ngModelChange)="searchUsers(searchForm.value.searchTerm)" placeHolder="Search Users..">
+                    </form>
+                    <button [hidden]="!isManagerOrAdmin" type="button" class="btn btn-info" data-toggle="modal" data-target="#addUserModal">
+                        <i class="fa fa-plus"></i> New User
+                    </button>
+                </div>
+                <div class="btn-group">
+                    <button type="button" (click)="getUsers(true)" class="btn btn-info">
+                        <i *ngIf="refreshing" class="fas fa-sync fa-spin"></i><i *ngIf="!refreshing"
+                            class="fas fa-sync"></i>
+                    </button>
+                </div>
+                <div class="btn-group">
+                    <button (click)="onLogOut()" class="btn btn-block btn-secondary">
+                        <span>Logout</span>
+                        <i class="fas fa-sign-in-alt ml-1"></i>
+                    </button>
+                </div>
+            </div>
+            <table class="table table-hover" style="overflow: auto;">
+                <thead class="table-borderless">
+                    <tr class="text-center">
+                        <th>Photo</th>
+                        <th>User ID</th>
+                        <th>First Name</th>
+                        <th>Last Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Status</th>
+                        <th [hidden]="!isManagerOrAdmin">Actions</th>
+                    </tr>
+                </thead>
+                <tbody *ngFor="let appUser of users">
+                    <tr class="text-center">
+                        <td>
+                            <img height="40" width="40" src="{{appUser?.profileImageUrl}}" alt=""
+                                class="rounded-circle img-fluid img-thumbnail">
+                        </td>
+                        <td (click)="onSelectUser(appUser)">{{appUser?.userId}}</td>
+                        <td (click)="onSelectUser(appUser)">{{appUser?.firstName}}</td>
+                        <td (click)="onSelectUser(appUser)">{{appUser?.lastName}}</td>
+                        <td (click)="onSelectUser(appUser)">{{appUser?.username}}</td>
+                        <td (click)="onSelectUser(appUser)">{{appUser?.email}}</td>
+                        <td>
+                            <span [hidden]="!appUser?.active" class="badge badge-success">Active</span>
+                            <span [hidden]="appUser?.active" class="badge badge-danger">Inactive</span>
+                        </td>
+                        <td [hidden]="!isManagerOrAdmin">
+                            <div class="btn-group">
+                                <button class="btn btn-outline-info" (click)="onEditUser(appUser)">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button [hidden]="!isAdmin" class="btn btn-outline-danger" (click)="onDeleteUser(appUser.username)">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <button [hidden]="true" type="button" id="openUserInfo" data-toggle="modal"
+            data-target="#viewUserModal"></button>
+        <button [hidden]="true" type="button" id="openUserEdit" data-toggle="modal"
+            data-target="#editUserModal"></button>
+
+        <!-- change password -->
+        <div [hidden]="!isAdmin" class="tab-pane fade" id="reset-password">
+            <form #resetPasswordForm="ngForm" (ngSubmit)="onResetPassword(resetPasswordForm)">
+                <fieldset>
+                    <legend>User Password Management</legend>
+                    <div class="form-group">
+                        <label for="inputEmail">Email address</label>
+                        <input type="email" name="reset-password-email" required ngModel class="form-control" placeholder="Enter email (example@email.com)">
+                        <small class="form-text text-muted">We'll never share your email with anyone else</small>
+                    </div>
+                    <button type="submit" [disabled] = "false" class="btn btn-primary">
+                        <i class="fas fa-spinner fa-spin" *ngIf="refreshing"></i>&nbsp;&nbsp;
+                        <span *ngIf="refreshing">Loading...</span>
+                        <span *ngIf="!refreshing">Reset Password</span>
+                    </button>
+                </fieldset>
+            </form>
+        </div>
+
+       <!-- user profile -->
+        
+            <app-profile class="tab-pane fade" id="profile"></app-profile>
+        
+
+        <!-- modal user info -->
+        <div class="modal fade bd-example-modal-lg" id="viewUserModal" tabindex="-1" role="dialog" aria-labelledby=""
+            aria-hidden="true">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title text-center" id="exampleModelLongTitle">{{selectedUser?.firstName}} {{selectedUser?.lastName}}</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-12 col-sm-auto">
+                                            <div class="mx-auto" style="width: 120px;">
+                                                <div class="d-flex justify-content-center align-items-center rounded">
+                                                    <img src="{{selectedUser?.profileImageUrl}}" alt="{{selectedUser?.firstName}}" height="120" width="120" class="rounded">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col d-flex flex-column flex-sm-row justify-content-between">
+                                            <div class="text-center text-sm-left mb-sm-0">
+                                                <h6 class="pt-sm-2 pb-1 mb-0 text-nowrap">{{selectedUser?.firstName}} {{selectedUser?.lastName}}</h6>
+                                                <p class="mb-1">{{selectedUser?.username}}</p>
+                                                <div>Status:
+                                                    <span [hidden]="!selectedUser?.active" class="badge badge-success">Active</span>
+                                                    <span [hidden]="selectedUser?.active" class="badge badge-danger">Inactive</span>
+                                                </div>
+                                                <div class="text-muted"><small>Last Login: {{selectedUser?.lastLoginDateDisplay | date: 'medium'}}</small></div>
+                                            </div>
+                                            <div class="text-center text-sm-right">
+                                                <div class="text-muted"><small>Joined {{selectedUser?.joinDate | date: 'medium'}}</small></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item"></li>
+                                    <li class="list-group-item"><i class="fa fa-id-badge float-right"></i>{{selectedUser?.userId}}</li>
+                                    <li class="list-group-item"><i
+                                            class="fa fa-envelope float-right"></i>{{selectedUser?.email}}</li>
+                                    <li class="list-group-item"><i class="fa fa-shield-alt float-right"></i>{{selectedUser?.role.substring(5)}}
+                                    </li>
+                                    <li *ngIf="selectedUser?.lastLoginDateDisplay" class="list-group-item"><i class="fa fa-sign-in-alt float-right"></i>{{selectedUser?.lastLoginDateDisplay | date: 'medium'}}
+                                    </li>
+                                    <li class="list-group-item">
+                                        <span [hidden]="selectedUser?.notLocked">
+                                            <i class="fa fa-lock float-right" style="color: red;"></i>
+                                            Account Locked
+                                        </span>
+                                        <span [hidden]="!selectedUser?.notLocked">
+                                            <i class="fa fa-lock float-right" style="color: green;"></i>
+                                            Account Unlocked
+                                        </span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- modal add user -->
+        <div [hidden]="!isManagerOrAdmin" class="modal draggable fade bd-example-modal-lg" id="addUserModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title text-center">New User</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div>
+                      <form #newUserForm="ngForm" (ngSubmit)="onAddNewUser(newUserForm)">
+                          <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <input type="text" name="firstName" class="form-control" required ngModel>
+                          </div>
+                          <div class="form-group">
+                            <label for="lastName">Last Name</label>
+                            <input type="text" name="lastName" class="form-control" required ngModel>
+                          </div>
+                          <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" name="username" class="form-control" required ngModel>
+                          </div>
+                          <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="text" name="email" class="form-control" required ngModel>
+                          </div>
+                          <div *ngIf="isAdmin" class="form-group">
+                            <label for="authority">Role</label>
+                            <select name="role" class="form-control" required ngModel="ROLE_USER">
+                                <option value="ROLE_USER">USER</option>
+                                <option value="ROLE_HR">HR</option>
+                                <option value="ROLE_MANAGER">MANAGER</option>
+                                <option value="ROLE_ADMIN">ADMIN</option>
+                                <option value="ROLE_SUPER_ADMIN">SUPER ADMIN</option>
+                            </select>
+                          </div>
+                          <div *ngIf="!isAdmin" class="form-group">
+                            <label for="authority">Role</label>
+                            <input type="text" name="role" required ngModel="USER" readonly class="form-control">
+                          </div>
+                          
+                          <div class="input-group mb-2">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Profile Picture</span>
+                            </div>
+                            <div class="custom-file">
+                                <input type="file" name="profileImage" (change)="onProfileImageChange($event.target.files[0].name, $event.target.files[0])"
+                                 class="custom-file-input">
+                                <label class="custom-file-label">
+                                    <span [hidden]="!fileName">{{fileName}}</span>
+                                    <span [hidden]="fileName">Choose File</span>
+                                </label>
+                            </div>
+                          </div>
+                          <fieldset class="form-group">
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="checkbox" name="active" ngModel class="form-check-input">Active
+                                </label>
+                            </div>
+                            <div class="form-check disabled">
+                                <label class="form-check-label">
+                                    <input type="checkbox" name="notLocked" ngModel class="form-check-input">Unlocked
+                                </label>
+                            </div>
+                          </fieldset>
+                          <button type="submit" style="display: none;" id="new-user-save"></button>
+                      </form>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal" id="new-user-close">Close</button>
+                  <button type="button" (click)="saveNewUser()" [disabled]="newUserForm.invalid" class="btn btn-primary">Save changes</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        <!-- modal edit user -->
+        <div class="modal draggable fade bd-example-modal-lg" id="editUserModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title text-center">Edit {{editUser?.firstName}} {{editUser?.lastName}}
+                      <small [hidden]="isManagerOrAdmin">(read only)</small>
+                  </h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                  <div>
+                      <form #editUserForm="ngForm" >
+                          <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <input type="text" [disabled]="!isManagerOrAdmin" name="firstName" class="form-control" required [(ngModel)]="editUser.firstName">
+                          </div>
+                          <div class="form-group">
+                            <label for="lastName">Last Name</label>
+                            <input type="text" [disabled]="!isManagerOrAdmin" name="lastName" class="form-control" required [(ngModel)]="editUser.lastName">
+                          </div>
+                          <div class="form-group">
+                            <label for="username">Username</label>
+                            <input type="text" [disabled]="!isManagerOrAdmin" name="username" class="form-control" required [(ngModel)]="editUser.username">
+                          </div>
+                          <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="text" [disabled]="!isManagerOrAdmin" name="email" class="form-control" required [(ngModel)]="editUser.email">
+                          </div>
+                          <div class="form-group">
+                            <label for="authority">Role <small [hidden]="isAdmin">(read only)</small></label>
+                            <select name="role" [disabled]="!isAdmin" class="form-control" required [(ngModel)]="editUser.role">
+                                <option value="ROLE_USER">USER</option>
+                                <option value="ROLE_HR">HR</option>
+                                <option value="ROLE_MANAGER">MANAGER</option>
+                                <option value="ROLE_ADMIN">ADMIN</option>
+                                <option value="ROLE_SUPER_ADMIN">SUPER ADMIN</option>
+                            </select>
+                          </div>
+                          
+                          <div class="input-group mb-2">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text">Profile Picture</span>
+                            </div>
+                            <div class="custom-file">
+                                <input type="file" accept="image/*" name="profileImage" (change)="onProfileImageChange($event.target.files[0].name, $event.target.files[0])"
+                                [disabled]="!isManagerOrAdmin" class="custom-file-input">
+                                <label class="custom-file-label">
+                                    <span [hidden]="!fileName">{{fileName}}</span>
+                                    <span [hidden]="fileName">Choose File</span>
+                                </label>
+                            </div>
+                          </div>
+                          <fieldset class="form-group">
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="checkbox" [disabled]="!isManager" name="active" [(ngModel)]="editUser.active" class="form-check-input">
+                                   Active<small [hidden]="isManager"> (read only)</small>
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <label class="form-check-label">
+                                    <input type="checkbox" [disabled]="!isManager" name="notLocked" [(ngModel)]="editUser.notLocked" class="form-check-input">
+                                    Unlocked<small [hidden]="isManager"> (read only)</small>
+                                </label>
+                            </div>
+                          </fieldset>
+                      </form>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-dismiss="modal" id="closeEditUserModalButton">Close</button>
+                  <button type="button" (click)="onUpdateUser()" [disabled]="editUserForm.invalid || !isManagerOrAdmin" class="btn btn-primary">Save changes</button>
+                </div>
+              </div>
+            </div>
+          </div>
+    </div>
+</div>
