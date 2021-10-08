@@ -25,7 +25,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   public profileImage: File;
   public fileStatus = new FileUploadStatus();
 
-  constructor(private authenticationService: AuthenticationService, 
+  constructor(private authenticationService: AuthenticationService,
     private userService: UserService,
     private router: Router,
     private sharedDataService: SharedDataService,
@@ -45,32 +45,32 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.currentUserName = this.user.username;
     const formData = this.userService.createUserFormdata(this.currentUserName, user, this.profileImage);
     this.subscriptions.push(
-      
+
       this.userService.updateUser(formData).subscribe(
         (response: User) => {
           this.authenticationService.addUserToLocalCache(response);
           this.sharedDataService.sendGetUsersEvent();
-          this.fileName=null;
-          this.profileImage=null;
+          this.fileName = null;
+          this.profileImage = null;
           this.sendNotification(NotificationType.SUCCESS, `${response.firstName}\'s profile updated successfully`);
           this.refreshing = false;
         },
         (errorResponse: HttpErrorResponse) => {
           this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
           this.refreshing = false;
-          this.profileImage=null;
+          this.profileImage = null;
         }
       )
     )
-    
+
   }
 
 
   sendNotification(notificationType: NotificationType, message: string) {
-    if(message){
+    if (message) {
       this.notificationService.notify(notificationType, message);
     }
-    else{
+    else {
       this.notificationService.notify(notificationType, 'An error occurred, please try again');
     }
   }
@@ -109,12 +109,12 @@ export class ProfileComponent implements OnInit, OnDestroy {
         this.fileStatus.status = 'progress';
         break;
       case HttpEventType.Response:
-        if(event.status === 200) {
+        if (event.status === 200) {
           this.user.profileImageUrl = `${event.body.profileImageUrl}?time=${new Date().getTime()}`;
           this.sendNotification(NotificationType.SUCCESS, 'profile image uploaded');
           this.fileStatus.status = 'done';
           break;
-        }else{
+        } else {
           this.sendNotification(NotificationType.ERROR, 'Unable to upload image, please try again');
           break;
         }
@@ -139,7 +139,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
     return this.authenticationService.getUserFromLocalStorage()?.role;
   }
 
-  ngOnDestroy(): void{
+  ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 

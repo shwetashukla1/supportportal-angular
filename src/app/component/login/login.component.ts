@@ -18,13 +18,13 @@ export class LoginComponent implements OnInit, OnDestroy {
   public subscriptions: Subscription[] = [];
 
   constructor(private router: Router, private authenticationService: AuthenticationService,
-              private notificationService: NotificationService) { }
+    private notificationService: NotificationService) { }
 
   ngOnInit(): void {
-    if(this.authenticationService.isLoggedIn()){
+    if (this.authenticationService.isLoggedIn()) {
       this.router.navigateByUrl('/user/management');
     }
-    else{
+    else {
       this.router.navigateByUrl('/login');
     }
   }
@@ -49,16 +49,16 @@ export class LoginComponent implements OnInit, OnDestroy {
     )
   }
   private sendErrorNotification(notificationType: NotificationType, message: any) {
-    if(message) {
+    if (message) {
       this.notificationService.notify(notificationType, message);
     }
-    else{
+    else {
       this.notificationService.notify(notificationType, 'An error occured, Please try again.');
       this.showLoading = false;
     }
   }
 
-  ngOnDestroy(): void{
+  ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 

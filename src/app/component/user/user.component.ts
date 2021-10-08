@@ -30,15 +30,15 @@ export class UserComponent implements OnInit, OnDestroy {
   private currentUserName: string;
   private subscriptions: Subscription[] = [];
 
-  constructor(private authenticationService: AuthenticationService, 
-              private router: Router,
-              private userService: UserService,
-              private notificationService: NotificationService,
-              private sharedDataService: SharedDataService) { 
-      this.subscriptions.push(this.sharedDataService.getUsersEvent().subscribe(
-        () => this.getUsers(false))
-      )
-    }
+  constructor(private authenticationService: AuthenticationService,
+    private router: Router,
+    private userService: UserService,
+    private notificationService: NotificationService,
+    private sharedDataService: SharedDataService) {
+    this.subscriptions.push(this.sharedDataService.getUsersEvent().subscribe(
+      () => this.getUsers(false))
+    )
+  }
 
   public changeTitle(title: string): void {
     this.titleSubject.next(title);
@@ -57,7 +57,7 @@ export class UserComponent implements OnInit, OnDestroy {
           this.userService.addUsersToLocalCache(response);
           this.users = response;
           this.refreshing = false;
-          if(showNotification){
+          if (showNotification) {
             this.sendNotification(NotificationType.SUCCESS, `${response.length} users loaded successfully.`);
             this.refreshing = false;
           }
@@ -70,10 +70,10 @@ export class UserComponent implements OnInit, OnDestroy {
     )
   }
   sendNotification(notificationType: NotificationType, message: string) {
-    if(message){
+    if (message) {
       this.notificationService.notify(notificationType, message);
     }
-    else{
+    else {
       this.notificationService.notify(notificationType, 'An error occurred, please try again');
     }
   }
@@ -95,19 +95,19 @@ export class UserComponent implements OnInit, OnDestroy {
   public onAddNewUser(userForm: NgForm): void {
     const formData = this.userService.createUserFormdata(null, userForm.value, this.profileImage);
     this.subscriptions.push(
-      
+
       this.userService.addUser(formData).subscribe(
         (response: User) => {
           document.getElementById('new-user-close').click();
           this.getUsers(false);
-          this.fileName=null;
-          this.profileImage=null;
+          this.fileName = null;
+          this.profileImage = null;
           userForm.reset();
           this.sendNotification(NotificationType.SUCCESS, `${response.firstName} ${response.lastName} added successfully`);
         },
         (errorResponse: HttpErrorResponse) => {
           this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
-          this.profileImage=null;
+          this.profileImage = null;
         }
       )
     )
@@ -116,22 +116,22 @@ export class UserComponent implements OnInit, OnDestroy {
   public searchUsers(searchTerm: string): void {
     const results: User[] = [];
     for (const user of this.userService.getUsersFromLocalCache()) {
-      if(user.firstName.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
-      user.lastName.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
-      user.username.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
-      user.userId.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1){
+      if (user.firstName.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
+        user.lastName.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
+        user.username.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1 ||
+        user.userId.toLowerCase().indexOf(searchTerm.toLowerCase()) !== -1) {
         results.push(user);
       }
     }
     this.users = results;
-    if(results.length === 0){
+    if (results.length === 0) {
       this.sendNotification(NotificationType.INFO, 'No user found');
     }
-    if(!searchTerm){
+    if (!searchTerm) {
       this.users = this.userService.getUsersFromLocalCache();
     }
   }
-  
+
   public onLogOut(): void {
     this.authenticationService.logOut();
     this.router.navigate(['/login']);
@@ -139,7 +139,7 @@ export class UserComponent implements OnInit, OnDestroy {
   }
 
   public onEditUser(editUser: User): void {
-    this.editUser = editUser; 
+    this.editUser = editUser;
     this.currentUserName = editUser.username;
     document.getElementById('openUserEdit').click();
   }
@@ -147,23 +147,23 @@ export class UserComponent implements OnInit, OnDestroy {
   public onUpdateUser(): void {
     const formData = this.userService.createUserFormdata(this.currentUserName, this.editUser, this.profileImage);
     this.subscriptions.push(
-      
+
       this.userService.updateUser(formData).subscribe(
         (response: User) => {
           document.getElementById('closeEditUserModalButton').click();
           this.getUsers(false);
-          this.fileName=null;
-          this.profileImage=null;
+          this.fileName = null;
+          this.profileImage = null;
           this.sendNotification(NotificationType.SUCCESS, `${response.firstName} ${response.lastName} updated successfully`);
         },
         (errorResponse: HttpErrorResponse) => {
           this.sendNotification(NotificationType.ERROR, errorResponse.error.message);
-          this.profileImage=null;
+          this.profileImage = null;
         }
       )
     )
-  } 
-  
+  }
+
   public onDeleteUser(username: string): void {
     this.subscriptions.push(
       this.userService.deleteUser(username).subscribe(
@@ -212,7 +212,7 @@ export class UserComponent implements OnInit, OnDestroy {
     return this.authenticationService.getUserFromLocalStorage().role;
   }
 
-  ngOnDestroy(): void{
+  ngOnDestroy(): void {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 

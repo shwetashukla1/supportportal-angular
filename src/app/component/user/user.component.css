@@ -4,3 +4,25 @@
     width: auto;
     overflow: auto;
 }
+td {
+    cursor: pointer;
+}
+.move-right {
+    position: absolute;
+    right: 0;
+}
+.top-container{
+    background: rgb(212, 217, 223);
+}
+.breadcrumb-color{
+    background: white
+}
+.m-width{
+    width: 120px;
+}
+.locked-color{
+    color: red;
+}
+.unlocked-color{
+    color: green;
+}

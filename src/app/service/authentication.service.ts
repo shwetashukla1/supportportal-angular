@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { User } from '../model/User'; 
+import { User } from '../model/User';
 import { JwtHelperService } from "@auth0/angular-jwt";
 
 @Injectable({
@@ -37,7 +37,7 @@ export class AuthenticationService {
     localStorage.setItem('token', token);
   }
 
-  public addUserToLocalCache(user : User): void {
+  public addUserToLocalCache(user: User): void {
     localStorage.setItem('user', JSON.stringify(user));
   }
 
@@ -48,21 +48,21 @@ export class AuthenticationService {
   public loadToken(): void {
     this.token = localStorage.getItem('token');
   }
-  
+
   public getToken(): string {
     return this.token;
   }
 
   public isLoggedIn(): boolean {
     this.loadToken();
-    if(this.token != null && this.token != ''){
-      if(this.jwtHelper.decodeToken(this.token).sub != null || ''){
-        if(!this.jwtHelper.isTokenExpired(this.token)){
+    if (this.token != null && this.token != '') {
+      if (this.jwtHelper.decodeToken(this.token).sub != null || '') {
+        if (!this.jwtHelper.isTokenExpired(this.token)) {
           this.loggedInUsername = this.jwtHelper.decodeToken(this.token).sub;
           return true;
         }
       }
-    }else{
+    } else {
       this.logOut();
       return false;
     }
